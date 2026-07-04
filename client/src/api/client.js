@@ -1,7 +1,11 @@
 import axios from 'axios';
 
-// Axios instance pointed at the API (proxied by Vite in dev).
-const api = axios.create({ baseURL: '/api' });
+// API base URL:
+//  - Production build reads VITE_API_URL (the deployed backend, e.g. Render).
+//  - Local dev falls back to '/api', which Vite proxies to localhost:5000.
+const baseURL = import.meta.env.VITE_API_URL || '/api';
+
+const api = axios.create({ baseURL });
 
 // Attach the JWT to every request if present.
 api.interceptors.request.use((config) => {

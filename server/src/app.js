@@ -10,7 +10,16 @@ import payrollRoutes from './routes/payroll.routes.js';
 export function createApp() {
   const app = express();
 
-  app.use(cors({ origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173' }));
+  // CORS: CLIENT_ORIGIN may be a comma-separated allowlist of frontend URLs.
+  // If it's unset, reflect any origin (safe here — auth is via Bearer tokens, not
+  // cookies) so the deployed frontend works out of the box. Lock it down by
+  // setting CLIENT_ORIGIN once the frontend URL is known.
+  const allowlist = (process.env.CLIENT_ORIGIN || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  app.use(cors({ origin: allowlist.length ? allowlist : true }));
+
   app.use(express.json({ limit: '5mb' })); // 5mb so base64 profile pics fit
 
   app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
