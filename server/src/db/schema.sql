@@ -1,13 +1,9 @@
 -- HRMS database schema
--- Dropped and recreated on migrate for a clean hackathon setup.
-
-DROP TABLE IF EXISTS leaves CASCADE;
-DROP TABLE IF EXISTS attendance CASCADE;
-DROP TABLE IF EXISTS salaries CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
+-- Idempotent: safe to run on every deploy/start — existing data is preserved.
+-- (For a full local reset, drop the tables manually or drop the database.)
 
 -- Users = auth + profile + job details in one table (simple for a hackathon).
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id              SERIAL PRIMARY KEY,
   employee_code   VARCHAR(50)  UNIQUE NOT NULL,
   name            VARCHAR(120) NOT NULL,
@@ -27,7 +23,7 @@ CREATE TABLE users (
 );
 
 -- Salary structure (one active row per user; admin controlled).
-CREATE TABLE salaries (
+CREATE TABLE IF NOT EXISTS salaries (
   id             SERIAL PRIMARY KEY,
   user_id        INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
   basic          NUMERIC(12,2) NOT NULL DEFAULT 0,
@@ -39,7 +35,7 @@ CREATE TABLE salaries (
 );
 
 -- Daily attendance. One row per user per day.
-CREATE TABLE attendance (
+CREATE TABLE IF NOT EXISTS attendance (
   id         SERIAL PRIMARY KEY,
   user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   work_date  DATE NOT NULL DEFAULT CURRENT_DATE,
@@ -51,7 +47,7 @@ CREATE TABLE attendance (
 );
 
 -- Leave / time-off requests.
-CREATE TABLE leaves (
+CREATE TABLE IF NOT EXISTS leaves (
   id            SERIAL PRIMARY KEY,
   user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   leave_type    VARCHAR(20) NOT NULL
@@ -66,6 +62,6 @@ CREATE TABLE leaves (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_attendance_user_date ON attendance (user_id, work_date);
-CREATE INDEX idx_leaves_user          ON leaves (user_id);
-CREATE INDEX idx_leaves_status        ON leaves (status);
+CREATE INDEX IF NOT EXISTS idx_attendance_user_date ON attendance (user_id, work_date);
+CREATE INDEX IF NOT EXISTS idx_leaves_user          ON leaves (user_id);
+CREATE INDEX IF NOT EXISTS idx_leaves_status        ON leaves (status);

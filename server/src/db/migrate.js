@@ -12,7 +12,12 @@ async function migrate() {
     await pool.query(sql);
     console.log('✅ Schema created successfully.');
   } catch (err) {
-    console.error('❌ Migration failed:', err.message);
+    // Log the full error — connection failures (e.g. AggregateError) often have
+    // an empty .message, so print code + the whole error to reveal the cause.
+    console.error('❌ Migration failed:', err.message || '(no message)');
+    if (err.code) console.error('   code:', err.code);
+    if (err.errors) console.error('   causes:', err.errors.map((e) => e.message || e.code).join('; '));
+    console.error(err);
     process.exitCode = 1;
   } finally {
     await pool.end();
